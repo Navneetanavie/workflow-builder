@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+.uppy-thumbnail-dashboard .uppy-Dashboard-inner {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}

@@ -14,6 +14,9 @@
   "dependencies": {
     "@clerk/nextjs": "^7.3.5",
     "@prisma/client": "^6.19.3",
+    "@uppy/core": "^5.2.0",
+    "@uppy/dashboard": "^5.1.1",
+    "@uppy/transloadit": "^5.5.1",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "react": "19.2.4",

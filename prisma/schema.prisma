@@ -8,12 +8,27 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String   @unique
+  id        String     @id @default(cuid())
+  clerkId   String     @unique
+  email     String     @unique
   firstName String?
   lastName  String?
   imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  workflows Workflow[]
+}
+
+model Workflow {
+  id           String   @id @default(cuid())
+  name         String
+  thumbnailUrl String?
+  definition   Json     @default("{}")
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([updatedAt])
 }
