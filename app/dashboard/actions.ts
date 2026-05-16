@@ -5,10 +5,8 @@ import { redirect } from "next/navigation";
 
 import { getDbUser } from "@/lib/get-db-user";
 import { prisma } from "@/lib/prisma";
-import {
-  DEFAULT_WORKFLOW_DEFINITION,
-  DEFAULT_WORKFLOW_THUMBNAIL,
-} from "@/lib/workflow-defaults";
+import { createInitialDefinition } from "@/lib/workflow/defaults";
+import { DEFAULT_WORKFLOW_THUMBNAIL } from "@/lib/workflow-defaults";
 
 async function requireDbUser() {
   const user = await getDbUser();
@@ -25,7 +23,7 @@ export async function createWorkflow() {
     data: {
       name: "Untitled workflow",
       thumbnailUrl: DEFAULT_WORKFLOW_THUMBNAIL,
-      definition: DEFAULT_WORKFLOW_DEFINITION,
+      definition: createInitialDefinition() as object,
       userId: user.id,
     },
   });
@@ -64,7 +62,7 @@ export async function duplicateWorkflow(id: string) {
     data: {
       name: `${source.name} (copy)`,
       thumbnailUrl: source.thumbnailUrl,
-      definition: source.definition ?? DEFAULT_WORKFLOW_DEFINITION,
+      definition: (source.definition ?? createInitialDefinition()) as object,
       userId: user.id,
     },
   });

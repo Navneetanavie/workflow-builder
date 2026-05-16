@@ -30,3 +30,28 @@ body {
   border-radius: 0;
   box-shadow: none;
 }
+
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border-width: 2px !important;
+  border-color: #fff !important;
+}
+
+/* Handles inside field blocks: anchor to the wrapper, not the node center */
+.react-flow__node .workflow-field-handle.react-flow__handle {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3px !important;
+}
+
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
