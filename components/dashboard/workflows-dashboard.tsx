@@ -1,9 +1,9 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { Plus, Search, FileUp } from "lucide-react";
+import { useMemo, useState, useTransition, useRef } from "react";
 
-import { createWorkflow } from "@/app/dashboard/actions";
+import { createWorkflow, importWorkflow } from "@/app/dashboard/actions";
 import { RenameWorkflowDialog } from "@/components/dashboard/rename-workflow-dialog";
 import { WorkflowCard } from "@/components/dashboard/workflow-card";
 import { WorkflowsEmptyState } from "@/components/dashboard/workflows-empty-state";
@@ -23,6 +23,7 @@ export function WorkflowsDashboard({
     null,
   );
   const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filteredWorkflows = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -39,6 +40,41 @@ export function WorkflowsDashboard({
     });
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = JSON.parse(text);
+        let name = "Imported workflow";
+        let definition = null;
+
+        if (parsed && typeof parsed === "object") {
+          if (parsed.name) name = parsed.name;
+          if (parsed.definition) {
+            definition = parsed.definition;
+          } else if (parsed.nodes || parsed.edges) {
+            definition = parsed;
+          }
+        }
+
+        startTransition(() => {
+          void importWorkflow(name, definition);
+        });
+      } catch (err) {
+        alert("Failed to parse JSON: Invalid format.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
@@ -52,6 +88,24 @@ export function WorkflowsDashboard({
         </div>
 
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".json"
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={handleImportClick}
+            disabled={isPending}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
+          >
+            <FileUp className="size-4 text-gray-500" />
+            {isPending ? "Importing…" : "Import JSON"}
+          </button>
+
           <button
             type="button"
             onClick={handleCreate}

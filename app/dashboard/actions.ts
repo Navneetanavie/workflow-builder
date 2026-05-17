@@ -114,3 +114,19 @@ export async function getWorkflowForExport(id: string) {
 
   return workflow;
 }
+
+export async function importWorkflow(name: string, definition: object) {
+  const user = await requireDbUser();
+
+  const workflow = await prisma.workflow.create({
+    data: {
+      name: name || "Imported workflow",
+      thumbnailUrl: DEFAULT_WORKFLOW_THUMBNAIL,
+      definition: definition || (createInitialDefinition() as object),
+      userId: user.id,
+    },
+  });
+
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/workflows/${workflow.id}`);
+}
