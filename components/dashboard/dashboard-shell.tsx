@@ -23,7 +23,7 @@ export function DashboardShell({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-screen bg-gray-50 overflow-hidden relative">
