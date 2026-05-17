@@ -39,6 +39,7 @@ export function DeletableEdge({
         style={{
           ...style,
           strokeWidth: selected ? 3 : style?.strokeWidth ?? 2,
+          strokeDasharray: "0",
         }}
         markerEnd={markerEnd}
       />

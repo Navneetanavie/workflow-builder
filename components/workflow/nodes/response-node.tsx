@@ -1,16 +1,18 @@
 "use client";
 
 import type { NodeProps } from "@xyflow/react";
-import { useReactFlow } from "@xyflow/react";
+import { useEdges, useNodes } from "@xyflow/react";
 
 import { BaseNode, FieldBlock } from "@/components/workflow/nodes/base-node";
+import { useWorkflowNode } from "@/components/workflow/nodes/node-context";
 import type { ResponseData } from "@/lib/workflow/types";
 
 export function ResponseNode({ id, data }: NodeProps) {
-  const { getEdges, getNodes } = useReactFlow();
+  const { runningNodeIds } = useWorkflowNode();
+  const isRunning = runningNodeIds?.includes(id) ?? false;
   const nodeData = data as ResponseData;
-  const edges = getEdges().filter((e) => e.target === id);
-  const nodes = getNodes();
+  const edges = useEdges().filter((e) => e.target === id);
+  const nodes = useNodes();
 
   const upstream = edges.map((edge) => {
     const source = nodes.find((n) => n.id === edge.source);
@@ -22,7 +24,7 @@ export function ResponseNode({ id, data }: NodeProps) {
   });
 
   return (
-    <BaseNode title="Response">
+    <BaseNode title="Response" isRunning={isRunning}>
       <FieldBlock
         label="result"
         port={{ id: "in-result", type: "target", dataType: "any" }}
