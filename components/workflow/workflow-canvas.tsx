@@ -104,7 +104,7 @@ function WorkflowCanvasInner({
       type: "deletable" as const,
     })),
   );
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<
     Awaited<ReturnType<typeof getWorkflowHistory>>

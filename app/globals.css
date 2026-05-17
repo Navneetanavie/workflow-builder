@@ -121,3 +121,45 @@ input[type="range"] {
 .react-flow__handle {
   cursor: cell !important;
 }
+
+/* Premium Tailwind Modern Styles for React Flow Controls (Zoom In, Zoom Out, Fit View) */
+.react-flow__controls {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  border: 1px solid #e5e7eb !important;
+  background-color: #ffffff !important;
+  text-color: gray/600;
+}
+
+.react-flow__controls-button {
+  background: #ffffff !important;
+  border: none !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  /* text-gray-700 */
+  fill: #374151 !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button svg {
+  width: 14px !important;
+  height: 14px !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.react-flow__controls-button:hover {
+  background: #f3f4f6 !important;
+  /* bg-gray-100 */
+  color: #111827 !important;
+  /* text-gray-900 */
+}
