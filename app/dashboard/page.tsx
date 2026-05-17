@@ -8,6 +8,7 @@ import { Logo } from "@/components/logo";
 import { getDbUser } from "@/lib/get-db-user";
 import { prisma } from "@/lib/prisma";
 import type { WorkflowListItem } from "@/types/workflow";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
 export default async function DashboardPage() {
   const clerkUser = await currentUser();
@@ -21,6 +22,7 @@ export default async function DashboardPage() {
   }
 
   const workflows = await prisma.workflow.findMany({
+    where: { userId: dbUser.id },
     orderBy: { updatedAt: "desc" },
     include: {
       user: {
@@ -44,31 +46,12 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <Logo className="size-8 rounded-md" />
-            <span className="font-semibold text-gray-900">Magica</span>
-          </div>
-          <SignOutButton>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              <LogOut className="size-4" />
-              Sign out
-            </button>
-          </SignOutButton>
-        </div>
-      </header>
+    <DashboardShell>
+      <WorkflowsDashboard
+        workflows={workflowItems}
+        currentUserId={dbUser.id}
+      />
+    </DashboardShell>
 
-      <main className="mx-auto max-w-7xl px-6 py-10">
-        <WorkflowsDashboard
-          workflows={workflowItems}
-          currentUserId={dbUser.id}
-        />
-      </main>
-    </div>
   );
 }
