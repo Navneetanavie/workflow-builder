@@ -1,7 +1,7 @@
 "use client";
 
 import type { NodeProps } from "@xyflow/react";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, useEdges } from "@xyflow/react";
 import { Play } from "lucide-react";
 
 import { BaseNode, FieldBlock } from "@/components/workflow/nodes/base-node";
@@ -11,6 +11,7 @@ import {
   outputBoxClassName,
   textareaClassName,
 } from "@/components/workflow/nodes/node-styles";
+import { useWorkflowNode } from "@/components/workflow/nodes/node-context";
 import { isHandleConnected } from "@/lib/workflow/execution";
 import type { GeminiData } from "@/lib/workflow/types";
 import { DEFAULT_GEMINI_SETTINGS } from "@/lib/workflow/types";
@@ -19,22 +20,26 @@ type GeminiNodeProps = NodeProps & {
   onRunNode?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
+  isRunning?: boolean;
 };
 
 export function GeminiNode({
   id,
   data,
-  onRunNode,
-  onDuplicate,
-  onDelete,
+  onRunNode: propsOnRunNode,
+  onDuplicate: propsOnDuplicate,
+  onDelete: propsOnDelete,
+  isRunning: propsIsRunning,
 }: GeminiNodeProps) {
-  const { updateNodeData, getEdges } = useReactFlow();
+  const { onRunNode, onDuplicate, onDelete, runningNodeIds } = useWorkflowNode();
+  const isRunning = propsIsRunning ?? runningNodeIds?.includes(id) ?? false;
+  const { updateNodeData } = useReactFlow();
+  const edges = useEdges();
   const raw = data as GeminiData;
   const nodeData: GeminiData = {
     ...raw,
     settings: raw.settings ?? DEFAULT_GEMINI_SETTINGS,
   };
-  const edges = getEdges();
 
   const setData = (patch: Partial<GeminiData>) => {
     updateNodeData(id, { ...nodeData, ...patch });
@@ -43,16 +48,21 @@ export function GeminiNode({
   const connected = (handleId: string) =>
     isHandleConnected(id, handleId, edges, "target");
 
+  const activeOnRunNode = propsOnRunNode ?? onRunNode;
+  const activeOnDuplicate = propsOnDuplicate ?? onDuplicate;
+  const activeOnDelete = propsOnDelete ?? onDelete;
+
   return (
     <BaseNode
       title="Gemini 3.1 Pro"
       showMenu
-      onDuplicate={() => onDuplicate?.(id)}
-      onDelete={() => onDelete?.(id)}
+      isRunning={isRunning}
+      onDuplicate={() => activeOnDuplicate?.(id)}
+      onDelete={() => activeOnDelete?.(id)}
       headerRight={
         <button
           type="button"
-          onClick={() => onRunNode?.(id)}
+          onClick={() => activeOnRunNode?.(id)}
           className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
         >
           <Play className="size-3 fill-current" />

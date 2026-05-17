@@ -21,6 +21,7 @@ type BaseNodeProps = {
   onDuplicate?: () => void;
   onDelete?: () => void;
   showMenu?: boolean;
+  isRunning?: boolean;
 };
 
 export function BaseNode({
@@ -31,10 +32,13 @@ export function BaseNode({
   onDuplicate,
   onDelete,
   showMenu = false,
+  isRunning = false,
 }: BaseNodeProps) {
   return (
     <div
-      className={`w-[320px] overflow-visible rounded-xl border border-gray-200 bg-white shadow-md ${className}`}
+      className={`w-[320px] overflow-visible rounded-xl border border-gray-200 bg-white shadow-md transition-all duration-300 ${
+        isRunning ? "animate-purple-glow" : ""
+      } ${className}`}
     >
       <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2.5">
         <div className="flex items-center gap-2">
@@ -65,7 +69,7 @@ export function PortHandle({ id, type, dataType }: PortHandleProps) {
       id={id}
       type={type}
       position={type === "source" ? Position.Right : Position.Left}
-      className={`workflow-field-handle !relative !inset-auto !top-auto !left-auto !right-auto !bottom-auto !translate-x-0 !translate-y-0 !size-2.5 !border-2 !border-white ${PORT_COLORS[dataType]}`}
+      className={`workflow-field-handle !relative !inset-auto !top-auto !left-auto !right-auto !bottom-auto !translate-x-0 !translate-y-0 !size-4 !border-2 !border-white transition-all duration-200 hover:scale-150 cursor-crosshair ${PORT_COLORS[dataType]}`}
     />
   );
 }
@@ -94,14 +98,13 @@ export function FieldBlock({
   const isOutput = port?.type === "source";
 
   return (
-    <div className="relative rounded-lg border border-gray-200 bg-white px-3 py-2.5">
+    <div className="relative rounded-lg border border-gray-200 bg-white px-3 py-2.5 workflow-field-block">
       {port && (
         <div
-          className={`pointer-events-auto absolute top-1/2 z-20 -translate-y-1/2 ${
-            isOutput
-              ? "-right-[5px] translate-x-1/2"
-              : "-left-[5px] -translate-x-1/2"
-          }`}
+          className={`pointer-events-auto absolute top-1/2 z-20 -translate-y-1/2 ${isOutput
+              ? "-right-[13px] translate-x-1/2"
+              : "-left-[13px] -translate-x-1/2"
+            }`}
         >
           <PortHandle
             id={port.id}

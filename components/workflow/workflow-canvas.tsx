@@ -32,6 +32,7 @@ import { GeminiNode } from "@/components/workflow/nodes/gemini-node";
 import { RequestInputsNode } from "@/components/workflow/nodes/request-inputs-node";
 import { ResponseNode } from "@/components/workflow/nodes/response-node";
 import { WorkflowHeader } from "@/components/workflow/workflow-header";
+import { WorkflowNodeContext } from "@/components/workflow/nodes/node-context";
 import { wouldCreateCycle } from "@/lib/workflow/dag";
 import {
   createCropImageNode,
@@ -61,6 +62,12 @@ type WorkflowCanvasProps = {
 };
 
 const edgeTypes = { deletable: DeletableEdge };
+const nodeTypes = {
+  requestInputs: RequestInputsNode,
+  cropImage: CropImageNode,
+  gemini: GeminiNode,
+  response: ResponseNode,
+};
 
 function WorkflowCanvasInner({
   workflowId,
@@ -84,6 +91,7 @@ function WorkflowCanvasInner({
     Awaited<ReturnType<typeof getWorkflowHistory>>
   >([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [runningNodeIds, setRunningNodeIds] = useState<string[]>([]);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const persist = useCallback(
@@ -99,9 +107,29 @@ function WorkflowCanvasInner({
     [workflowId],
   );
 
+  const nodesRef = useRef(nodes);
+  const edgesRef = useRef(edges);
+
   useEffect(() => {
-    persist(nodes, edges);
-  }, [nodes, edges, persist]);
+    nodesRef.current = nodes;
+    edgesRef.current = edges;
+  }, [nodes, edges]);
+
+  const edgesSignature = useMemo(() => {
+    return edges
+      .map((e) => `${e.id}:${e.source}:${e.target}:${e.sourceHandle}:${e.targetHandle}`)
+      .join("|");
+  }, [edges]);
+
+  const isFirstMount = useRef(true);
+
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    persist(nodesRef.current, edgesRef.current);
+  }, [edgesSignature, persist]);
 
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -243,6 +271,8 @@ function WorkflowCanvasInner({
 
   const handleRun = useCallback(
     async (nodeIds: string[] = []) => {
+      const targets = nodeIds.length > 0 ? nodeIds : nodes.map((n) => n.id);
+      setRunningNodeIds(targets);
       setIsRunning(true);
       try {
         const result = await runWorkflow(workflowId, nodeIds);
@@ -255,9 +285,10 @@ function WorkflowCanvasInner({
         setHistory(nextHistory);
       } finally {
         setIsRunning(false);
+        setRunningNodeIds([]);
       }
     },
-    [workflowId, setNodes],
+    [workflowId, setNodes, nodes],
   );
 
   const handleRunNode = useCallback(
@@ -287,29 +318,7 @@ function WorkflowCanvasInner({
     [screenToFlowPosition, setNodes],
   );
 
-  const nodeTypes = useMemo(
-    () => ({
-      requestInputs: RequestInputsNode,
-      cropImage: (props: React.ComponentProps<typeof CropImageNode>) => (
-        <CropImageNode
-          {...props}
-          onRunNode={handleRunNode}
-          onDuplicate={duplicateNode}
-          onDelete={deleteNode}
-        />
-      ),
-      gemini: (props: React.ComponentProps<typeof GeminiNode>) => (
-        <GeminiNode
-          {...props}
-          onRunNode={handleRunNode}
-          onDuplicate={duplicateNode}
-          onDelete={deleteNode}
-        />
-      ),
-      response: ResponseNode,
-    }),
-    [handleRunNode, duplicateNode, deleteNode],
-  );
+
 
   const loadHistory = useCallback(async () => {
     const data = await getWorkflowHistory(workflowId);
@@ -318,58 +327,67 @@ function WorkflowCanvasInner({
   }, [workflowId]);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-[#ececee]">
-      <WorkflowHeader
-        workflowName={workflowName}
-        isRunning={isRunning}
-        onRunAll={() => void handleRun()}
-        onOpenHistory={() => void loadHistory()}
-      />
+    <WorkflowNodeContext.Provider
+      value={{
+        onRunNode: handleRunNode,
+        onDuplicate: duplicateNode,
+        onDelete: deleteNode,
+        runningNodeIds,
+      }}
+    >
+      <div className="flex h-[calc(100vh-3.5rem)] flex-col bg-[#ececee]">
+        <WorkflowHeader
+          workflowName={workflowName}
+          isRunning={isRunning}
+          onRunAll={() => void handleRun()}
+          onOpenHistory={() => void loadHistory()}
+        />
 
-      <div className="relative flex-1">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={handleNodesChange}
-          nodesDraggable
-          nodesConnectable
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          isValidConnection={isValidConnection}
-          onBeforeDelete={onBeforeDelete}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          fitView
-          fitViewOptions={{ padding: 0.2 }}
-          deleteKeyCode={null}
-          edgesReconnectable
-          elementsSelectable
-          proOptions={{ hideAttribution: true }}
-        >
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={18}
-            size={1.2}
-            color="#b8b8bc"
-          />
-          <Controls position="bottom-left" showInteractive={false} />
-          <MiniMap
-            position="bottom-right"
-            pannable
-            zoomable
-            className="!rounded-lg !border !border-gray-200 !bg-white"
-          />
-        </ReactFlow>
+        <div className="relative flex-1">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            nodesDraggable
+            nodesConnectable
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            isValidConnection={isValidConnection}
+            onBeforeDelete={onBeforeDelete}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            fitView
+            fitViewOptions={{ padding: 0.2 }}
+            deleteKeyCode={null}
+            edgesReconnectable
+            elementsSelectable
+            proOptions={{ hideAttribution: true }}
+          >
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={18}
+              size={1.2}
+              color="#b8b8bc"
+            />
+            <Controls position="bottom-left" showInteractive={false} />
+            <MiniMap
+              position="bottom-right"
+              pannable
+              zoomable
+              className="!rounded-lg !border !border-gray-200 !bg-white"
+            />
+          </ReactFlow>
 
-        <NodePicker onAdd={addNode} />
+          <NodePicker onAdd={addNode} />
+        </div>
+
+        <HistoryPanel
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          runs={history}
+        />
       </div>
-
-      <HistoryPanel
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        runs={history}
-      />
-    </div>
+    </WorkflowNodeContext.Provider>
   );
 }
 

@@ -63,7 +63,7 @@ export function GeminiSettingsPanel({
   onChange,
 }: GeminiSettingsPanelProps) {
   return (
-    <div className="rounded-lg border border-gray-200">
+    <div className="rounded-lg border border-gray-200 workflow-settings-panel">
       <button
         type="button"
         onClick={onToggle}

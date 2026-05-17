@@ -1,12 +1,13 @@
 "use client";
 
 import type { NodeProps } from "@xyflow/react";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, useEdges } from "@xyflow/react";
 import { Play, RotateCcw } from "lucide-react";
 
 import { BaseNode, FieldBlock } from "@/components/workflow/nodes/base-node";
 import { NodeImageField } from "@/components/workflow/nodes/node-image-field";
 import { outputBoxClassName } from "@/components/workflow/nodes/node-styles";
+import { useWorkflowNode } from "@/components/workflow/nodes/node-context";
 import { isHandleConnected } from "@/lib/workflow/execution";
 import type { CropImageData } from "@/lib/workflow/types";
 
@@ -14,6 +15,7 @@ type CropImageNodeProps = NodeProps & {
   onRunNode?: (nodeId: string) => void;
   onDuplicate?: (nodeId: string) => void;
   onDelete?: (nodeId: string) => void;
+  isRunning?: boolean;
 };
 
 function SliderInput({
@@ -28,7 +30,7 @@ function SliderInput({
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="space-y-1 rounded-lg border border-gray-200 bg-white px-3 py-2">
+    <div className="space-y-1 rounded-lg border border-gray-200 bg-white px-3 py-2 workflow-slider-input">
       <div className="flex items-center justify-between text-xs text-gray-700">
         <span>{label}</span>
         <div className="flex items-center gap-1">
@@ -58,29 +60,37 @@ function SliderInput({
 export function CropImageNode({
   id,
   data,
-  onRunNode,
-  onDuplicate,
-  onDelete,
+  onRunNode: propsOnRunNode,
+  onDuplicate: propsOnDuplicate,
+  onDelete: propsOnDelete,
+  isRunning: propsIsRunning,
 }: CropImageNodeProps) {
-  const { updateNodeData, getEdges } = useReactFlow();
+  const { onRunNode, onDuplicate, onDelete, runningNodeIds } = useWorkflowNode();
+  const isRunning = propsIsRunning ?? runningNodeIds?.includes(id) ?? false;
+  const { updateNodeData } = useReactFlow();
+  const edges = useEdges();
   const nodeData = data as CropImageData;
-  const edges = getEdges();
   const imageConnected = isHandleConnected(id, "in-image", edges, "target");
 
   const setData = (patch: Partial<CropImageData>) => {
     updateNodeData(id, { ...nodeData, ...patch });
   };
 
+  const activeOnRunNode = propsOnRunNode ?? onRunNode;
+  const activeOnDuplicate = propsOnDuplicate ?? onDuplicate;
+  const activeOnDelete = propsOnDelete ?? onDelete;
+
   return (
     <BaseNode
       title="Crop Image"
       showMenu
-      onDuplicate={() => onDuplicate?.(id)}
-      onDelete={() => onDelete?.(id)}
+      isRunning={isRunning}
+      onDuplicate={() => activeOnDuplicate?.(id)}
+      onDelete={() => activeOnDelete?.(id)}
       headerRight={
         <button
           type="button"
-          onClick={() => onRunNode?.(id)}
+          onClick={() => activeOnRunNode?.(id)}
           className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
         >
           <Play className="size-3 fill-current" />
