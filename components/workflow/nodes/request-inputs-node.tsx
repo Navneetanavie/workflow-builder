@@ -11,12 +11,9 @@ import {
   labelInputClassName,
   textareaClassName,
 } from "@/components/workflow/nodes/node-styles";
-import { useWorkflowNode } from "@/components/workflow/nodes/node-context";
 import type { RequestField, RequestInputsData } from "@/lib/workflow/types";
 
 export function RequestInputsNode({ id, data }: NodeProps) {
-  const { runningNodeIds } = useWorkflowNode();
-  const isRunning = runningNodeIds?.includes(id) ?? false;
   const { updateNodeData } = useReactFlow();
   const nodeData = data as RequestInputsData;
 
@@ -52,7 +49,7 @@ export function RequestInputsNode({ id, data }: NodeProps) {
   return (
     <BaseNode
       title="Request-Inputs"
-      isRunning={isRunning}
+      isRunning={false}
       headerRight={
         <AddFieldMenu
           onAddText={() => addField("text")}

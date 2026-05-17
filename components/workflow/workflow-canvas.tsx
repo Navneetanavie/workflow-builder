@@ -593,7 +593,9 @@ function WorkflowCanvasInner({
                   zoomable
                   className="!rounded-lg !border !border-gray-200 !bg-white"
                 />
+                <NodePicker onAdd={addNode} />
               </ReactFlow>
+
             </div>
 
             {/* Right History Panel */}

@@ -4,12 +4,9 @@ import type { NodeProps } from "@xyflow/react";
 import { useEdges, useNodes } from "@xyflow/react";
 
 import { BaseNode, FieldBlock } from "@/components/workflow/nodes/base-node";
-import { useWorkflowNode } from "@/components/workflow/nodes/node-context";
 import type { ResponseData } from "@/lib/workflow/types";
 
 export function ResponseNode({ id, data }: NodeProps) {
-  const { runningNodeIds } = useWorkflowNode();
-  const isRunning = runningNodeIds?.includes(id) ?? false;
   const nodeData = data as ResponseData;
   const edges = useEdges().filter((e) => e.target === id);
   const nodes = useNodes();
@@ -29,7 +26,7 @@ export function ResponseNode({ id, data }: NodeProps) {
     .filter(Boolean);
 
   return (
-    <BaseNode title="Response" isRunning={isRunning}>
+    <BaseNode title="Response" isRunning={false}>
       <FieldBlock
         label="result"
         port={{ id: "in-result", type: "target", dataType: "any" }}
