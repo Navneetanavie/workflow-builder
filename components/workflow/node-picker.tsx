@@ -3,6 +3,8 @@
 import { Crop, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
 
+import { GEMINI_MODEL_LABEL } from "@/lib/gemini/models";
+
 type NodePickerProps = {
   onAdd: (type: "cropImage" | "gemini") => void;
 };
@@ -35,7 +37,7 @@ export function NodePicker({ onAdd }: NodePickerProps) {
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
             >
               <Sparkles className="size-4 text-gray-500" />
-              Gemini 3.1 Pro
+              {GEMINI_MODEL_LABEL}
             </button>
           </div>
         )}

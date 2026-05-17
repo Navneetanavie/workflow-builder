@@ -2,9 +2,11 @@
 
 import type { NodeProps } from "@xyflow/react";
 import { useReactFlow, useEdges } from "@xyflow/react";
-import { Play } from "lucide-react";
+import { Maximize2, Play } from "lucide-react";
+import { useState } from "react";
 
 import { BaseNode, FieldBlock } from "@/components/workflow/nodes/base-node";
+import { GeminiResponseModal } from "@/components/workflow/nodes/gemini-response-modal";
 import { GeminiSettingsPanel } from "@/components/workflow/nodes/gemini-settings";
 import { NodeImageField } from "@/components/workflow/nodes/node-image-field";
 import {
@@ -12,6 +14,7 @@ import {
   textareaClassName,
 } from "@/components/workflow/nodes/node-styles";
 import { useWorkflowNode } from "@/components/workflow/nodes/node-context";
+import { GEMINI_MODEL_LABEL } from "@/lib/gemini/models";
 import { isHandleConnected } from "@/lib/workflow/execution";
 import type { GeminiData } from "@/lib/workflow/types";
 import { DEFAULT_GEMINI_SETTINGS } from "@/lib/workflow/types";
@@ -38,7 +41,7 @@ export function GeminiNode({
   const raw = data as GeminiData;
   const nodeData: GeminiData = {
     ...raw,
-    settings: raw.settings ?? DEFAULT_GEMINI_SETTINGS,
+    settings: { ...DEFAULT_GEMINI_SETTINGS, ...raw.settings },
   };
 
   const setData = (patch: Partial<GeminiData>) => {
@@ -52,9 +55,18 @@ export function GeminiNode({
   const activeOnDuplicate = propsOnDuplicate ?? onDuplicate;
   const activeOnDelete = propsOnDelete ?? onDelete;
 
+  const visionConnectionCount = edges.filter(
+    (edge) => edge.target === id && edge.targetHandle === "in-image",
+  ).length;
+
+  const [responseExpanded, setResponseExpanded] = useState(false);
+  const responseText = nodeData.response?.trim() ?? "";
+  const hasResponse = responseText.length > 0;
+  const isErrorResponse = responseText.startsWith("Error:");
+
   return (
     <BaseNode
-      title="Gemini 3.1 Pro"
+      title={GEMINI_MODEL_LABEL}
       showMenu
       isRunning={isRunning}
       onDuplicate={() => activeOnDuplicate?.(id)}
@@ -112,7 +124,11 @@ export function GeminiNode({
       </FieldBlock>
 
       <FieldBlock
-        label="Image (Vision)"
+        label={
+          visionConnectionCount > 1
+            ? `Image (Vision) — ${visionConnectionCount} connected`
+            : "Image (Vision)"
+        }
         connected={connected("in-image")}
         port={{ id: "in-image", type: "target", dataType: "image" }}
       >
@@ -138,11 +154,35 @@ export function GeminiNode({
       <FieldBlock
         label="Response"
         port={{ id: "out-response", type: "source", dataType: "text" }}
+        headerRight={
+          hasResponse ? (
+            <button
+              type="button"
+              onClick={() => setResponseExpanded(true)}
+              className="nodrag inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+            >
+              <Maximize2 className="size-3" />
+              Expand
+            </button>
+          ) : undefined
+        }
       >
-        <div className={outputBoxClassName}>
-          {nodeData.response ?? "No output yet"}
+        <div
+          className={`${outputBoxClassName} max-h-48 overflow-y-auto whitespace-pre-wrap ${
+            hasResponse
+              ? "items-start justify-start text-left text-xs text-gray-900"
+              : ""
+          } ${isErrorResponse ? "text-red-600" : ""}`}
+        >
+          {hasResponse ? responseText : "No output yet"}
         </div>
       </FieldBlock>
+
+      <GeminiResponseModal
+        open={responseExpanded}
+        onClose={() => setResponseExpanded(false)}
+        content={responseText}
+      />
     </BaseNode>
   );
 }

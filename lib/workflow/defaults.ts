@@ -1,3 +1,4 @@
+import { GEMINI_MODEL_LABEL } from "@/lib/gemini/models";
 import { withNodeProtection } from "@/lib/workflow/protected-nodes";
 import type {
   CropImageData,
@@ -86,7 +87,7 @@ export function createGeminiNode(position: {
     type: "gemini",
     position,
     data: {
-      label: "Gemini 3.1 Pro",
+      label: GEMINI_MODEL_LABEL,
       prompt: "",
       systemPrompt: "You are a helpful assistant...",
       imageVisionUrl: "",

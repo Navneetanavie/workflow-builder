@@ -1,3 +1,4 @@
+import { GEMINI_MODEL_LABEL } from "@/lib/gemini/models";
 import type {
   HandleMeta,
   PortDataType,
@@ -76,7 +77,7 @@ export function nodeTypeLabel(type: WorkflowNodeType): string {
     case "cropImage":
       return "Crop Image";
     case "gemini":
-      return "Gemini 3.1 Pro";
+      return GEMINI_MODEL_LABEL;
     case "response":
       return "Response";
     default:

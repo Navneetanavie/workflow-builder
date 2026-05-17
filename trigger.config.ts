@@ -4,7 +4,7 @@ const projectRef = process.env.TRIGGER_PROJECT_REF;
 
 export default defineConfig({
   project: projectRef!,
-  dirs: ["./lib/image-cropping"],
+  dirs: ["./lib/image-cropping", "./lib/gemini"],
   retries: {
     enabledInDev: false,
   },

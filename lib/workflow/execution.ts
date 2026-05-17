@@ -31,6 +31,31 @@ export function pickImageUrl(value: unknown): string | undefined {
   return undefined;
 }
 
+export function pickImageUrls(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return [...new Set(value.flatMap((item) => pickImageUrls(item)))];
+  }
+  const single = pickImageUrl(value);
+  return single ? [single] : [];
+}
+
+function resolveSourceOutputValue(
+  edge: WorkflowEdge,
+  sourceOutput: NodeRunOutput,
+): unknown {
+  if (edge.sourceHandle?.startsWith("out-")) {
+    const fieldId = edge.sourceHandle.replace("out-", "");
+    return sourceOutput[fieldId] ?? sourceOutput.response ?? sourceOutput.image;
+  }
+  if (edge.sourceHandle === "out-image") {
+    return sourceOutput.image ?? sourceOutput.url;
+  }
+  if (edge.sourceHandle === "out-response") {
+    return sourceOutput.response ?? sourceOutput.text;
+  }
+  return sourceOutput;
+}
+
 export type NodeExecutionResult = {
   nodeId: string;
   nodeType: string;
@@ -57,15 +82,18 @@ export function resolveInputs(
 
     if (sourceNode && outputs.get(edge.source)) {
       const sourceOutput = outputs.get(edge.source)!;
-      if (edge.sourceHandle?.startsWith("out-")) {
-        const fieldId = edge.sourceHandle.replace("out-", "");
-        inputs[key] = sourceOutput[fieldId] ?? sourceOutput.response ?? sourceOutput.image;
-      } else if (edge.sourceHandle === "out-image") {
-        inputs[key] = sourceOutput.image ?? sourceOutput.url;
-      } else if (edge.sourceHandle === "out-response") {
-        inputs[key] = sourceOutput.response ?? sourceOutput.text;
+      const value = resolveSourceOutputValue(edge, sourceOutput);
+
+      if (
+        node.type === "gemini" &&
+        edge.targetHandle === "in-image" &&
+        key === "Image (Vision)"
+      ) {
+        const urls = pickImageUrls(value);
+        const existing = pickImageUrls(inputs[key]);
+        inputs[key] = [...new Set([...existing, ...urls])];
       } else {
-        inputs[key] = sourceOutput;
+        inputs[key] = value;
       }
     }
   }
@@ -95,8 +123,13 @@ export function resolveInputs(
     if (!inputs["System Prompt"] && data.systemPrompt) {
       inputs["System Prompt"] = data.systemPrompt;
     }
-    if (!inputs["Image (Vision)"] && data.imageVisionUrl) {
-      inputs["Image (Vision)"] = data.imageVisionUrl;
+    const visionUrls = pickImageUrls(inputs["Image (Vision)"]);
+    if (data.imageVisionUrl?.trim()) {
+      visionUrls.push(data.imageVisionUrl.trim());
+    }
+    if (visionUrls.length > 0) {
+      inputs["Image (Vision)"] =
+        visionUrls.length === 1 ? visionUrls[0] : [...new Set(visionUrls)];
     }
   }
 
@@ -125,10 +158,10 @@ export function executeNodeStub(
   }
 
   if (node.type === "gemini") {
-    const prompt = String(inputs.Prompt ?? "No prompt");
     return {
-      response: `[Stub] Gemini response for: ${prompt.slice(0, 120)}`,
-      text: `[Stub] Gemini response for: ${prompt.slice(0, 120)}`,
+      response: null,
+      text: null,
+      message: "Gemini runs on the server via Trigger.dev",
     };
   }
 
