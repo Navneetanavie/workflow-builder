@@ -28,10 +28,13 @@ export async function syncUserFromClerk() {
 
 export async function upsertUser(data: ClerkUserPayload) {
   const email = data.email_addresses[0]?.email_address;
+
   if (!email) return null;
 
   return prisma.user.upsert({
-    where: { clerkId: data.id },
+    where: {
+      email,
+    },
     create: {
       clerkId: data.id,
       email,
@@ -40,14 +43,13 @@ export async function upsertUser(data: ClerkUserPayload) {
       imageUrl: data.image_url,
     },
     update: {
-      email,
+      clerkId: data.id,
       firstName: data.first_name,
       lastName: data.last_name,
       imageUrl: data.image_url,
     },
   });
 }
-
 export async function deleteUserByClerkId(clerkId: string) {
   return prisma.user.deleteMany({ where: { clerkId } });
 }
