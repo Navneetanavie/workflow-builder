@@ -115,3 +115,9 @@ select,
 input[type="range"] {
   cursor: pointer !important;
 }
+
+/* Enforce the premium white plus (+) selection cursor for port handles under all conditions */
+.workflow-field-handle,
+.react-flow__handle {
+  cursor: cell !important;
+}

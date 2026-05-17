@@ -14,14 +14,19 @@ export function ResponseNode({ id, data }: NodeProps) {
   const edges = useEdges().filter((e) => e.target === id);
   const nodes = useNodes();
 
-  const upstream = edges.map((edge) => {
-    const source = nodes.find((n) => n.id === edge.source);
-    const label =
-      (source?.data as { label?: string })?.label ??
-      source?.type ??
-      edge.source;
-    return label;
-  });
+  const upstream = edges
+    .map((edge) => {
+      const source = nodes.find((n) => n.id === edge.source);
+
+      if (!source) return null;
+
+      return (
+        (source.data as { label?: string })?.label ??
+        source.type ??
+        source.id
+      );
+    })
+    .filter(Boolean);
 
   return (
     <BaseNode title="Response" isRunning={isRunning}>

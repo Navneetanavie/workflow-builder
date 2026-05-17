@@ -5,6 +5,7 @@ import Dashboard from "@uppy/dashboard";
 import Transloadit from "@uppy/transloadit";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { getImageUrlFromAssembly } from "@/lib/transloadit";
 
@@ -30,7 +31,12 @@ export function ImageUploadModal({
 }: ImageUploadModalProps) {
   const dashboardTargetRef = useRef<HTMLDivElement>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const error = externalError ?? uploadError;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const uppy = useMemo(() => {
     return new Uppy({
@@ -117,42 +123,46 @@ export function ImageUploadModal({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-xs">
       <button
         type="button"
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/60 transition-opacity"
         aria-label="Close upload dialog"
         onClick={() => {
           if (!busy) onClose();
         }}
       />
-      <button
-        type="button"
-        onClick={() => {
-          if (!busy) onClose();
-        }}
-        className="absolute right-6 top-6 z-20 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
-        aria-label="Close"
-      >
-        <X className="size-5" />
-      </button>
 
-      <div className="relative z-10 w-full max-w-[760px] overflow-hidden rounded-2xl bg-white shadow-2xl">
-        {error && (
-          <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-600">
-            {error}
-          </p>
-        )}
-        {busy && (
-          <p className="border-b border-gray-100 bg-gray-50 px-4 py-2 text-sm text-gray-600">
-            {busyLabel}
-          </p>
-        )}
-        <div ref={dashboardTargetRef} className="uppy-thumbnail-dashboard" />
+      <div className="relative z-10 w-full max-w-[760px]">
+        <button
+          type="button"
+          onClick={() => {
+            if (!busy) onClose();
+          }}
+          className="absolute -top-10 -right-12 z-20 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+          aria-label="Close"
+        >
+          <X className="size-6" />
+        </button>
+
+        <div className="relative w-full overflow-hidden rounded-2xl bg-white shadow-2xl">
+          {error && (
+            <p className="border-b border-red-100 bg-red-50 px-4 py-2 text-sm text-red-600">
+              {error}
+            </p>
+          )}
+          {busy && (
+            <p className="border-b border-gray-100 bg-gray-50 px-4 py-2 text-sm text-gray-600">
+              {busyLabel}
+            </p>
+          )}
+          <div ref={dashboardTargetRef} className="uppy-thumbnail-dashboard" />
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -62,11 +62,21 @@ export function GeminiNode({
       headerRight={
         <button
           type="button"
+          disabled={isRunning}
           onClick={() => activeOnRunNode?.(id)}
-          className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+          className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-700/60"
         >
-          <Play className="size-3 fill-current" />
-          Run
+          {isRunning ? (
+            <>
+              <span className="size-1.5 animate-ping rounded-full bg-white mr-0.5" />
+              Running...
+            </>
+          ) : (
+            <>
+              <Play className="size-3 fill-current" />
+              Run
+            </>
+          )}
         </button>
       }
     >
