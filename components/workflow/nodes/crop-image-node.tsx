@@ -151,9 +151,20 @@ export function CropImageNode({
         label="Output Image"
         port={{ id: "out-image", type: "source", dataType: "image" }}
       >
-        <div className={outputBoxClassName}>
-          {nodeData.outputUrl ? "Output ready" : "No output yet"}
-        </div>
+        {nodeData.outputUrl ? (
+          <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={nodeData.outputUrl}
+              alt="Cropped output"
+              className="max-h-40 w-full object-contain"
+            />
+          </div>
+        ) : (
+          <div className={outputBoxClassName}>
+            {isRunning ? "Cropping image…" : "No output yet"}
+          </div>
+        )}
       </FieldBlock>
     </BaseNode>
   );

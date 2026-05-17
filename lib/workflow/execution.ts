@@ -15,6 +15,22 @@ import type {
 export type NodeRunInput = Record<string, unknown>;
 export type NodeRunOutput = Record<string, unknown>;
 
+export function pickImageUrl(value: unknown): string | undefined {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    if (typeof record.url === "string" && record.url.trim()) {
+      return record.url.trim();
+    }
+    if (typeof record.image === "string" && record.image.trim()) {
+      return record.image.trim();
+    }
+  }
+  return undefined;
+}
+
 export type NodeExecutionResult = {
   nodeId: string;
   nodeType: string;
@@ -24,7 +40,7 @@ export type NodeExecutionResult = {
   status: "completed";
 };
 
-function resolveInputs(
+export function resolveInputs(
   node: WorkflowNode,
   edges: WorkflowEdge[],
   outputs: Map<string, NodeRunOutput>,
@@ -67,9 +83,10 @@ function resolveInputs(
     inputs["Y Position (%)"] = data.y;
     inputs["Width (%)"] = data.width;
     inputs["Height (%)"] = data.height;
-    if (!inputs["Input Image"] && data.inputImageUrl) {
-      inputs["Input Image"] = data.inputImageUrl;
-    }
+
+    const fromConnectedNode = pickImageUrl(inputs["Input Image"]);
+    const fromUploadField = data.inputImageUrl?.trim() || undefined;
+    inputs["Input Image"] = fromConnectedNode ?? fromUploadField ?? "";
   }
 
   if (node.type === "gemini") {
@@ -86,7 +103,7 @@ function resolveInputs(
   return inputs;
 }
 
-function executeNodeStub(
+export function executeNodeStub(
   node: WorkflowNode,
   inputs: NodeRunInput,
 ): NodeRunOutput {
@@ -100,14 +117,10 @@ function executeNodeStub(
   }
 
   if (node.type === "cropImage") {
-    const image =
-      inputs["Input Image"] ??
-      (node.data as CropImageData).inputImageUrl ??
-      "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&q=80";
     return {
-      image,
-      url: image,
-      message: `Cropped at x=${inputs["X Position (%)"] ?? 0}%, y=${inputs["Y Position (%)"] ?? 0}%`,
+      image: null,
+      url: null,
+      message: "Crop image runs on the server via Trigger.dev",
     };
   }
 
@@ -128,7 +141,9 @@ function executeNodeStub(
   return {};
 }
 
-function seedOutputsFromNodeState(nodes: WorkflowNode[]): Map<string, NodeRunOutput> {
+export function seedOutputsFromNodeState(
+  nodes: WorkflowNode[],
+): Map<string, NodeRunOutput> {
   const outputs = new Map<string, NodeRunOutput>();
 
   for (const node of nodes) {

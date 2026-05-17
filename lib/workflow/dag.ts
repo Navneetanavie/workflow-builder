@@ -74,13 +74,28 @@ export function wouldCreateCycle(
   return false;
 }
 
+export function expandTargetNodeIds(
+  targetNodeIds: string[],
+  edges: WorkflowEdge[],
+): string[] {
+  const expanded = new Set(targetNodeIds);
+  for (const targetId of targetNodeIds) {
+    for (const ancestorId of getAncestors(targetId, edges)) {
+      expanded.add(ancestorId);
+    }
+  }
+  return [...expanded];
+}
+
 export function getExecutionLevels(
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
   targetNodeIds?: string[],
 ): string[][] {
   const nodeIds = new Set(
-    targetNodeIds ?? nodes.map((node) => node.id),
+    targetNodeIds
+      ? expandTargetNodeIds(targetNodeIds, edges)
+      : nodes.map((node) => node.id),
   );
   const relevantEdges = edges.filter(
     (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target),

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import {
   applyOutputsToNodes,
   executeWorkflowGraph,
-} from "@/lib/workflow/execution";
+} from "@/lib/workflow/execution.server";
 import { parseWorkflowDefinition } from "@/lib/workflow/defaults";
 import type { WorkflowDefinition } from "@/lib/workflow/types";
 
@@ -38,15 +38,18 @@ export async function saveWorkflowDefinition(
 export async function runWorkflow(
   workflowId: string,
   nodeIds: string[] = [],
+  definitionOverride?: WorkflowDefinition,
 ) {
   const { user, workflow } = await requireWorkflowAccess(workflowId);
-  const definition = parseWorkflowDefinition(workflow.definition);
+  const definition = definitionOverride
+    ? parseWorkflowDefinition(definitionOverride)
+    : parseWorkflowDefinition(workflow.definition);
   const targetIds =
     nodeIds.length > 0
       ? nodeIds
       : definition.nodes.map((node) => node.id);
 
-  const { results, nodeOutputs } = executeWorkflowGraph(
+  const { results, nodeOutputs } = await executeWorkflowGraph(
     definition.nodes,
     definition.edges,
     targetIds,

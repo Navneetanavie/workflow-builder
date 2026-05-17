@@ -92,7 +92,7 @@ function WorkflowCanvasInner({
   workflowName,
   initialDefinition,
 }: WorkflowCanvasProps) {
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes, getEdges } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState(
     (initialDefinition.nodes as Node[]).map((node) =>
       withNodeProtection(node),
@@ -294,7 +294,10 @@ function WorkflowCanvasInner({
       setRunningNodeIds(targets);
       setIsRunning(true);
       try {
-        const result = await runWorkflow(workflowId, nodeIds);
+        const result = await runWorkflow(workflowId, nodeIds, {
+          nodes: getNodes() as WorkflowNode[],
+          edges: getEdges() as WorkflowEdge[],
+        });
         setNodes(
           (result.definition.nodes as Node[]).map((node) =>
             withNodeProtection(node),
@@ -307,7 +310,7 @@ function WorkflowCanvasInner({
         setRunningNodeIds([]);
       }
     },
-    [workflowId, setNodes, nodes],
+    [workflowId, setNodes, getNodes, getEdges],
   );
 
   const handleRunNode = useCallback(
