@@ -2,9 +2,12 @@ import https from "node:https";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
 
 import { uploadCroppedImageToTransloadit } from "@/lib/image-cropping/transloadit-upload";
+
+const execAsync = promisify(exec);
 
 export type CropJobPayload = {
   imageUrl: string;
@@ -64,15 +67,29 @@ async function downloadImage(imageUrl: string, filePath: string): Promise<void> 
 }
 
 async function getImageDimensions(imagePath: string) {
-  const metadata = await sharp(imagePath).metadata();
-  const { width, height } = metadata;
+  try {
+    const { stdout } = await execAsync(
+      `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 "${imagePath}"`,
+    );
+    const [width, height] = stdout.trim().split("x").map(Number);
+    if (width && height) {
+      return { width, height };
+    }
+  } catch {
+    // Fall through to format-level dimensions for still images.
+  }
+
+  const { stdout } = await execAsync(
+    `ffprobe -v error -show_entries format=width,height -of csv=s=x:p=0 "${imagePath}"`,
+  );
+  const [width, height] = stdout.trim().split("x").map(Number);
   if (!width || !height) {
     throw new Error("Could not determine image dimensions");
   }
   return { width, height };
 }
 
-async function cropImageWithSharp(
+async function cropImageWithFFmpeg(
   inputPath: string,
   outputPath: string,
   x: number,
@@ -80,12 +97,13 @@ async function cropImageWithSharp(
   width: number,
   height: number,
 ) {
+  const cropFilter = `crop=${width}:${height}:${x}:${y}`;
   try {
-    await sharp(inputPath)
-      .extract({ left: x, top: y, width, height })
-      .toFile(outputPath);
+    await execAsync(
+      `ffmpeg -i "${inputPath}" -vf "${cropFilter}" -y "${outputPath}"`,
+    );
   } catch (error) {
-    throw new Error(`Sharp cropping failed: ${error}`);
+    throw new Error(`FFmpeg cropping failed: ${error}`);
   }
 }
 
@@ -165,7 +183,7 @@ export async function runCropImagePipeline(
       payload.heightPercent,
     );
 
-    await cropImageWithSharp(
+    await cropImageWithFFmpeg(
       inputImagePath,
       outputImagePath,
       pixelX,
